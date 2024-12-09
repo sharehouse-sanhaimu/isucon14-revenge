@@ -59,7 +59,8 @@ func chairPostChairs(w http.ResponseWriter, r *http.Request) {
 	// chair_available Tableにchair_idを追加する。(is_availableはデフォルトでTrueが入るようになっている)
 	_, err = db.ExecContext(
 		ctx, 
-		"INSERT INTO chair_available (chair_id) VALUES (?)", chairID
+		"INSERT INTO chair_available (chair_id) VALUES (?)", 
+		chairID,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
