@@ -16,6 +16,11 @@ type Chair struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
+type ChairAvailable struct {
+	ChairID    string    `db:"chair_id"`
+	IsAvailable bool      `db:"is_available"`
+}
+
 type ChairModel struct {
 	Name  string `db:"name"`
 	Speed int    `db:"speed"`
