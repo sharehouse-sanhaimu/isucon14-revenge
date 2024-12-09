@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -11,6 +12,7 @@ func internalGetMatching(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	// MEMO: 一旦最も待たせているリクエストに適当な空いている椅子マッチさせる実装とする。おそらくもっといい方法があるはず…
 	ride := &Ride{}
+	// 最も待たせているride（まだchair_idがnull）の、最も古い(ORDER BY created_at)ものを取得
 	if err := db.GetContext(ctx, ride, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1`); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNoContent)
@@ -21,29 +23,40 @@ func internalGetMatching(w http.ResponseWriter, r *http.Request) {
 	}
 
 	matched := &Chair{}
-	empty := false
 	for i := 0; i < 10; i++ {
-		if err := db.GetContext(ctx, matched, "SELECT * FROM chairs INNER JOIN (SELECT id FROM chairs WHERE is_active = TRUE ORDER BY RAND() LIMIT 1) AS tmp ON chairs.id = tmp.id LIMIT 1"); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-			writeError(w, http.StatusInternalServerError, err)
-		}
+		// Complatedのchairsの中で最も古いものを取得
+		err := db.GetContext(ctx, matched, `
+			SELECT chairs.id, chairs.name, chairs.updated_at 
+			FROM chairs 
+			LEFT JOIN rides ON chairs.id = rides.chair_id 
+			LEFT JOIN ride_statuses ON ride_statuses.ride_id = rides.id 
+			WHERE chairs.is_active = TRUE 
+			GROUP BY chairs.id 
+			HAVING COUNT(CASE WHEN ride_statuses.status != 'COMPLETED' THEN 1 END) = 0 
+			ORDER BY chairs.updated_at LIMIT 1;`)
 
-		if err := db.GetContext(ctx, &empty, "SELECT COUNT(*) = 0 FROM (SELECT COUNT(chair_sent_at) = 6 AS completed FROM ride_statuses WHERE ride_id IN (SELECT id FROM rides WHERE chair_id = ?) GROUP BY ride_id) is_completed WHERE completed = FALSE", matched.ID); err != nil {
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				// 結果がない場合（ErrNoRows）、ループを継続
+				continue
+			}
+			// それ以外のエラーは500エラーとして返す
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-		if empty {
-			break
-		}
+
+		// クエリ結果が得られた場合、ループを抜ける
+		break
 	}
-	if !empty {
-		w.WriteHeader(http.StatusNoContent)
+
+	// ループが終了した後、結果が得られたかを確認
+	if matched.ID == "" {
+		// クエリ結果が得られなかった場合の処理
+		writeError(w, http.StatusNotFound, fmt.Errorf("no completed chairs found"))
 		return
 	}
 
+	// マッチングしたrideとchairを紐付ける
 	if _, err := db.ExecContext(ctx, "UPDATE rides SET chair_id = ? WHERE id = ?", matched.ID, ride.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
