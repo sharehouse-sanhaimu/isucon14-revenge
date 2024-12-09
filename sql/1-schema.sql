@@ -135,6 +135,7 @@ CREATE TABLE coupons
 )
   COMMENT 'クーポンテーブル';
 
+DROP TABLE IF EXISTS chair_available;
 CREATE TABLE chair_available (
     chair_id INT PRIMARY KEY,
     is_available BOOLEAN DEFAULT TRUE
