@@ -45,10 +45,21 @@ func chairPostChairs(w http.ResponseWriter, r *http.Request) {
 	chairID := ulid.Make().String()
 	accessToken := secureRandomStr(32)
 
+	// TODO: chairsが増える箇所
 	_, err := db.ExecContext(
 		ctx,
 		"INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)",
 		chairID, owner.ID, req.Name, req.Model, false, accessToken,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// chair_available Tableにchair_idを追加する。(is_availableはデフォルトでTrueが入るようになっている)
+	_, err = db.ExecContext(
+		ctx, 
+		"INSERT INTO chair_available (chair_id) VALUES (?)", chairID
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
