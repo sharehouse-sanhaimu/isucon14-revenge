@@ -137,7 +137,7 @@ CREATE TABLE coupons
 
 DROP TABLE IF EXISTS chair_available;
 CREATE TABLE chair_available (
-    chair_id INT PRIMARY KEY,
+    chair_id VARCHAR(26) PRIMARY KEY,
     is_available BOOLEAN DEFAULT TRUE
 )
   COMMENT '椅子の利用可能状態テーブル';
