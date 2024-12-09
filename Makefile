@@ -5,6 +5,7 @@ deploy:
 	@systemctl restart nginx
 	@systemctl restart mysql
 	@systemctl restart isuride-go
+	@systemctl restart isuride-matcher
 	systemctl daemon-reload
 
 backup:
