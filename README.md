@@ -1,0 +1,5 @@
+# Deploy 
+
+```sh
+$ make deploy
+```
