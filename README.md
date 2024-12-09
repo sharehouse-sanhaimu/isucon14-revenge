@@ -1,5 +1,5 @@
 # Deploy 
 
 ```sh
-$ make deploy
+$ sudo make deploy
 ```
