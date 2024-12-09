@@ -20,8 +20,8 @@ func internalGetMatching(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	matched := &ChairAvailable{}
-	if err := db.GetContext(ctx, matched, `SELECT chair_id FROM chair_available WHERE is_available = TRUE LIMIT 1`); err != nil {
+	availableChair := &ChairAvailable{}
+	if err := db.GetContext(ctx, availableChair, `SELECT chair_id FROM chair_available WHERE is_available = TRUE LIMIT 1`); err != nil {
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -30,13 +30,19 @@ func internalGetMatching(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-	if _, err := db.ExecContext(ctx, "UPDATE rides SET chair_id = ? WHERE id = ?", matched.ChairID, ride.ID); err != nil {
+matched := &Chair{}
+if err := db.GetContext(ctx, matched, `SELECT * FROM chairs WHERE id = ?`, availableChair.ChairID); err != nil {
+	writeError(w, http.StatusInternalServerError, err)
+	return
+}
+
+	if _, err := db.ExecContext(ctx, "UPDATE rides SET chair_id = ? WHERE id = ?", matched.ID, ride.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	// chair_availableテーブルのis_availableをfalseに更新
-	if _, err := db.ExecContext(ctx, "UPDATE chair_available SET is_available = FALSE WHERE chair_id = ?", matched.ChairID); err != nil {
+	if _, err := db.ExecContext(ctx, "UPDATE chair_available SET is_available = FALSE WHERE chair_id = ?", matched.ID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 	}
