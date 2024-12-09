@@ -25,15 +25,7 @@ func internalGetMatching(w http.ResponseWriter, r *http.Request) {
 	matched := &Chair{}
 	for i := 0; i < 10; i++ {
 		// Complatedのchairsの中で最も古いものを取得
-		query := `
-			SELECT * 
-			FROM chairs 
-			LEFT JOIN rides ON chairs.id = rides.chair_id 
-			LEFT JOIN ride_statuses ON ride_statuses.ride_id = rides.id 
-			WHERE chairs.is_active = TRUE 
-			GROUP BY chairs.id 
-			HAVING COUNT(CASE WHEN ride_statuses.status != 'COMPLETED' THEN 1 END) = 0 
-			ORDER BY chairs.updated_at LIMIT 1;`
+		query := `SELECT * FROM chairs LEFT JOIN rides ON chairs.id = rides.chair_id LEFT JOIN ride_statuses ON ride_statuses.ride_id = rides.id WHERE chairs.is_active = TRUE GROUP BY chairs.id HAVING COUNT(CASE WHEN ride_statuses.status != 'COMPLETED' THEN 1 END) = 0 ORDER BY chairs.updated_at LIMIT 1`
 		err := db.GetContext(ctx, matched, query)
 
 		if err != nil {
