@@ -346,6 +346,7 @@ func appPostRides(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: マッチングが入ったchairの利用状況を更新する
 	if _, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)`,
@@ -562,6 +563,7 @@ func appPostRideEvaluatation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: COMPLETEDになったChairの利用状況
 	_, err = tx.ExecContext(
 		ctx,
 		`INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)`,
@@ -569,6 +571,18 @@ func appPostRideEvaluatation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
+	}
+
+	// マッチングが入ったchairの利用状況をFalseに更新する
+	if _, err := tx.ExecContext(
+			ctx,
+			`UPDATE chair_available
+			SET is_available = TRUE
+			WHERE chair_id = ?`,
+			ride.ChairID, // どのchairがマッチングされたかを指定
+	); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
 	}
 
 	if err := tx.GetContext(ctx, ride, `SELECT * FROM rides WHERE id = ?`, rideID); err != nil {
