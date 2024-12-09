@@ -4,8 +4,9 @@ deploy:
 	@cp -r /home/isucon/webapp/etc/mysql /etc/
 	@systemctl restart nginx
 	@systemctl restart mysql
+	@cd /home/isucon/webapp/go && go build -o isuride
 	@systemctl restart isuride-go
-	@systemctl daemon-reload
+	systemctl daemon-reload
 
 backup:
 	@cp /home/isucon/env.sh /home/isucon/webapp/env.sh
