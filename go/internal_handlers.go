@@ -26,7 +26,7 @@ func internalGetMatching(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < 10; i++ {
 		// Complatedのchairsの中で最も古いものを取得
 		err := db.GetContext(ctx, matched, `
-			SELECT chairs.id, chairs.name, chairs.updated_at 
+			SELECT * 
 			FROM chairs 
 			LEFT JOIN rides ON chairs.id = rides.chair_id 
 			LEFT JOIN ride_statuses ON ride_statuses.ride_id = rides.id 
