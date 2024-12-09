@@ -134,3 +134,9 @@ CREATE TABLE coupons
   PRIMARY KEY (user_id, code)
 )
   COMMENT 'クーポンテーブル';
+
+CREATE TABLE chair_available (
+    chair_id INT PRIMARY KEY,
+    is_available BOOLEAN DEFAULT TRUE
+);
+  COMMENT '椅子の利用可能状態テーブル';
