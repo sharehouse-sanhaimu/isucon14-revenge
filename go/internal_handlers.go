@@ -20,8 +20,8 @@ func internalGetMatching(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	matched := &ChairAvailable{}
-	if err := db.GetContext(ctx, matched, `SELECT * FROM chair_available ca JOIN chairs c ON ca.chair_id = c.id WHERE ca.is_available = TRUE AND c.is_active = TRUE LIMIT 1;`); err != nil {
+	matched := &ChairID{}
+	if err := db.GetContext(ctx, matched, `SELECT ca.chair_id FROM chair_available ca JOIN chairs c ON ca.chair_id = c.id WHERE ca.is_available = TRUE AND c.is_active = TRUE LIMIT 1;`); err != nil {
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNoContent)
 		return
